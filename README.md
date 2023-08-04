@@ -7,13 +7,13 @@ Features: For use the 'APRSdroid' APP in LoRa technology.
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/main.jpg">
 <br>
 
-if you don't have a TTGO LoRa32 T-beam with integrated GPS receiver but you want to test the potential of APRS trackers with LoRa technology you can use this solution..
+If you don't have a TTGO LoRa32 T-beam with integrated GPS receiver but you want to test the potential of APRS trackers with LoRa technology you can use this solution..
 
 Source code is in src/main.cpp, compilated firmware is in /bin directory.
 
 Firmware configuration/customization is via TTY terminal (ex: Putty or Termite).
 
-Those who have problems with compiling from PlatformIO can directly download the already compiled .bin file and inoculate it with the usual tools (eg: 'ESP32 flash download tools' or my 'CGWloader' ) starting from the address 0x000.
+If you have problems with the compilation from PlatformIO you can directly download the compiled '.bin' file and inoculate it with the usual tools (eg: 'ESP32 flash download tools' or my 'CGW_loader' ) starting from the address 0x0000.
 
 Before running your station please check:
 
@@ -31,7 +31,7 @@ Before running your station please check:
 2. Upload to your TTGO desk.
 
 
-<h2>Upload via CGWloader</h2
+<h2>Upload via CGW_loader</h2
 
 <br>
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/CGWloader.jpg">
