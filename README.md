@@ -31,22 +31,17 @@ Before running your station please check:
 2. Upload to your TTGO desk.
 
 
-
 <h2>Upload via CGWloader</h2
 
 <br>
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/CGWloader.jpg">
 <br>
 
-
-
 <h2>Upload via ESP32 flash download tools</h2
 
 <br>
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/ESP32.jpg">
 <br>
-
-
 
 <h2>Config APRSdroid</h2>
 
@@ -60,17 +55,13 @@ To use it specifically for this project it is necessary, under the heading 'Conn
 
 Anyone interested in tracking in APRS already knows APRSdroid and therefore I do not report the 'basic' setups for correct operation that can be found in various tutorials on the net.
 
-
-
 <h2>Firmware setup</h2>
-
 
 Using a serial terminal ( eg: Termite with setup : 115200 bps 8N1 [ append LF ] ) it is possible to verify and vary some parameters of the TTGO which is used as a transmitter.
 
 <br>
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/termite.jpg"><br>
 <br>
-
 
 
 If you need help or have any questions or suggestions, please reach me: iw1cgw(at)libero.it
