@@ -7,7 +7,7 @@ Features: For use the 'APRSdroid' APP in LoRa technology.
 <img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/main.jpg">
 <br>
 
-Those who do not have a TTGO LoRa32 T-beam with built-in GPS receiver and want to experience the potential of APRS trackers with LoRa technology can remedy this with this solution.
+if you don't have a TTGO LoRa32 T-beam with integrated GPS receiver but you want to test the potential of APRS trackers with LoRa technology you can use this solution..
 
 Source code is in src/main.cpp, compilated firmware is in /bin directory.
 
