@@ -4,7 +4,7 @@ Firmware for TTGO LoRa32 V2.1.
 Features: For use the 'APRSdroid' APP in LoRa technology.
 
 <br>
-<img src="https://github.com/iw1cgw/LoRa_APRSdroid/blob/main/img/main.jpg">
+<img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/main.jpg">
 <br>
 
 Those who do not have a TTGO LoRa32 T-beam with built-in GPS receiver and want to experience the potential of APRS trackers with LoRa technology can remedy this with this solution.
@@ -35,7 +35,7 @@ Before running your station please check:
 <h2>Upload via CGWloader</h2
 
 <br>
-<img src="https://github.com/iw1cgw/LoRa_APRSdroid/blob/main/img/CGWloader.jpg">
+<img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/CGWloader.jpg">
 <br>
 
 
@@ -43,7 +43,7 @@ Before running your station please check:
 <h2>Upload via ESP32 flash download tools</h2
 
 <br>
-<img src="https://github.com/iw1cgw/LoRa_APRSdroid/blob/main/img/ESP32.jpg">
+<img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/ESP32.jpg">
 <br>
 
 
@@ -52,10 +52,10 @@ Before running your station please check:
 
 APRSdroid by George Lukas DO1GL can be downloaded from his website: https://aprsdroid.org/ or from GooglePlay.
 
-To use it specifically for this project it is necessary, under the heading 'Connection preferences', to arrive at: TNC (text TNC2) and type of connection BLUETOOTH SPP; then select the Bluetooth unit – 'APRSdroid' .
+To use it specifically for this project it is necessary, under the heading 'Connection preferences', to arrive at: TNC (text TNC2) and type of connection BLUETOOTH SPP; then select the Bluetooth unit â€“ 'APRSdroid' .
 
 <br>
-<img src="https://github.com/iw1cgw/LoRa_APRSdroid/blob/main/img/setup.jpg">
+<img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/setup.jpg">
 <br>
 
 Anyone interested in tracking in APRS already knows APRSdroid and therefore I do not report the 'basic' setups for correct operation that can be found in various tutorials on the net.
@@ -68,7 +68,7 @@ Anyone interested in tracking in APRS already knows APRSdroid and therefore I do
 Using a serial terminal ( eg: Termite with setup : 115200 bps 8N1 [ append LF ] ) it is possible to verify and vary some parameters of the TTGO which is used as a transmitter.
 
 <br>
-<img src="https://github.com/ddaqua6/LoRa_APRSdroid/blob/main/img/termite.jpg"><br>
+<img src="https://github.com/iw1cgw/LoRa-APRSdroid/blob/main/img/termite.jpg"><br>
 <br>
 
 
