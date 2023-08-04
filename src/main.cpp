@@ -1,36 +1,3 @@
-/*
-  COMPILATA CON 1.8.19 
-
-definizione board : 
-https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-
-** Giugno 2023
-
-invia stringhe meteo in formato APRS con modulazione LoRa 
-/*
- * Logo Images
- * draw a 1bit bitmap: pixel ON=white pixel OFF=black
- * convert using:
- * https://convertio.co/it/bmp-xbm/
- * or
- * https://www.online-utility.org/image_converter.jsp (choose XBM)
- * 
- * https://mischianti.org/images-to-byte-array-online-converter-cpp-arduino/
- * https://mischianti.org/2021/07/14/ssd1306-oled-display-draw-images-splash-and-animations-2/#Sample_sketch_to_show_the_logo
-
-
-
---------------- LoRa-AprsDroid ---------------
-
-
-
-
-
-*/
-
-
-
-
 
 #include "config.h"
 #include <Arduino.h>
