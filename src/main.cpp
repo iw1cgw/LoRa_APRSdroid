@@ -1,3 +1,36 @@
+/*
+  COMPILATA CON 1.8.19 
+
+definizione board : 
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+** Giugno 2023
+
+invia stringhe meteo in formato APRS con modulazione LoRa 
+/*
+ * Logo Images
+ * draw a 1bit bitmap: pixel ON=white pixel OFF=black
+ * convert using:
+ * https://convertio.co/it/bmp-xbm/
+ * or
+ * https://www.online-utility.org/image_converter.jsp (choose XBM)
+ * 
+ * https://mischianti.org/images-to-byte-array-online-converter-cpp-arduino/
+ * https://mischianti.org/2021/07/14/ssd1306-oled-display-draw-images-splash-and-animations-2/#Sample_sketch_to_show_the_logo
+
+
+
+--------------- LoRa-AprsDroid ---------------
+
+
+
+
+
+*/
+
+
+
+
 
 #include "config.h"
 #include <Arduino.h>
@@ -24,7 +57,12 @@
 BluetoothSerial SerialBT;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+
+
+
+boolean Xmode;
 boolean token;
+boolean Beacon;
 unsigned long tx_interval;   // default ogni 30 secondi il token buono per fare una tx
 unsigned long millis_read_batt;   // default ogni 30 secondi refresh display se abilitato
 unsigned long millis_led;
@@ -39,14 +77,18 @@ byte sep;
 unsigned tmp;
 
 char tmp_buffer[60];            // a supporto seriale e menu e caricamento EEPROM
+
 char carMenu;                   // a supporto seriale e menu
 char car;                       // a supporto seriale e menu
 
 String data_string=""; 
+String mem_tmp_string="";
 String tmp_string=""; 
+
 unsigned int cnt=0;                   // contatore invio stringhe meteo
-byte display_onoff=1;
-byte led_onoff=1;
+bool displayOn=true;
+bool ledOn=true;
+bool dataOK=false;
 
 const unsigned char logo [] PROGMEM = {
 // 'LoRa_APRSdroid', 128x64px
@@ -194,7 +236,7 @@ void lora_send(String tx_data);
 void fast_blink();
 void verifica_parametri();
 void load_param();
-void status_display();
+void status();
 void menu();
 void righello();
 void make_display();
@@ -244,13 +286,13 @@ void setup()
   load_param();
   verifica_parametri();
   read_battery();
-  status_display();
+  status();
  
 
 
   /*
   ---------------------------------------------------------------------------
-    DISPLAY STARTUP
+    OLED_DISPLAY STARTUP
   ---------------------------------------------------------------------------
   */
  
@@ -297,9 +339,9 @@ void setup()
   delay(3000);
   make_display();
   delay(3000);
-  if (display_onoff == 0 )
+  if ( !displayOn )
     {
-    display.clearDisplay();  
+    display.dim(true);  
     display.display();
     }
   
@@ -333,12 +375,22 @@ void loop()
         menu();
       }
 
-    if (car == 'd' )
+    if (car == 's' )
       {
         while (Serial.read() != '\n') {};
-        status_display();
+        status();
       }
-   
+
+    /*
+    if (car == 's' )
+      {
+        while (Serial.read() != '\n') {};
+        lora_setup();
+        data_string = "IW1CGW-4>APDR16,WIDE1-1:=4419.52N/00748.29Eb/A=002274 APRSdroid LoRa tech | batt:4.28 | 005";
+        lora_send(data_string);
+      }
+    */
+
 
    /*
   ---------------------------------------------------------------------------
@@ -350,7 +402,7 @@ void loop()
   {
     read_battery();
     millis_read_batt = millis();
-    if ( display_onoff == 1 ) make_display();
+    make_display();
   }
 
 
@@ -361,7 +413,7 @@ void loop()
   ---------------------------------------------------------------------------
  */
   
-  if ( led_onoff == 1 ) 
+  if ( ledOn ) 
     {
       if ( millis() - millis_led  < 75 ) digitalWrite(PLED1, HIGH);
       if ( millis() - millis_led  > 75 ) digitalWrite(PLED1, LOW);
@@ -376,9 +428,17 @@ void loop()
   ---------------------------------------------------------------------------
   */
   
+ 
  if ( millis() - tx_interval > val_tx_interval*1000 ) token = true;
 
-
+ //if ( Beacon && millis()-tx_interval > 30000 && token == true && mem_tmp_string != "")
+ if ( Beacon && millis()-tx_interval > 600000 && token == true && mem_tmp_string != "")
+  {
+    tx_interval = millis();
+    tmp_string = mem_tmp_string;
+    dataOK=true;
+    LoRa_send();   
+  }
 
    /*
   ---------------------------------------------------------------------------
@@ -388,10 +448,70 @@ void loop()
   
   if (SerialBT.available())
     {
-      //Serial.write(SerialBT.read());
       byte LL = SerialBT.read();
-      if (LL != 10 && LL != 13 ) tmp_string = tmp_string + char(LL);    // fin che non trovi un Cr o un LF accoda caratteri 
-      if (LL == 10 || LL == 13 ) LoRa_send();                           // se trovi CR o LF risolvi stringa completa e invia a sender
+      if (LL != 10 && LL != 13 ) tmp_string = tmp_string + char(LL);  // fin che non trovi un Cr o un LF accoda caratteri 
+      if (LL == 10 || LL == 13 )                                      // se trovi CR o LF risolvi stringa completa e invia a sender
+        {
+          dataOK=false;
+          if ( tmp_string.indexOf('/')-tmp_string.indexOf(':') == 10 ) dataOK = true;                              // cerca il primo carattere di separazione '/'
+          
+          //Serial.println(F("BT:"));
+          //Serial.println(tmp_string);
+          //Serial.println(tmp_string.indexOf('/')-tmp_string.indexOf(':'));
+          //if ( dataOK == true ) Serial.println("dataOK = true");
+          //if ( dataOK == false ) Serial.println("dataOK = false");
+          //Serial.println(tmp_string.indexOf('/')-tmp_string.indexOf(':') );
+          //LatLong_string = tmp_string.substring(sep-8, sep+10);       // estrai latitudine e longitudine muovendoti dalla posizione di '/'
+          
+          
+          if ( tmp_string == "beacon") 
+            { 
+              Beacon = !Beacon;
+              if (Beacon) SerialBT.println("beacon on");
+              if (!Beacon) SerialBT.println("beacon off");
+            }
+
+          if ( tmp_string == "send" ) 
+            { 
+              SerialBT.println("beacon forced");
+              tx_interval = 0;
+            }
+
+          if ( tmp_string == "xmode") 
+            { 
+              Xmode = !Xmode;
+              if (Xmode) SerialBT.println("xmode on");
+              if (!Xmode) SerialBT.println("xmode off");
+              lora_setup();
+            }
+
+          if ( tmp_string == "display") 
+            { 
+              displayOn = !displayOn;
+              if (displayOn)
+                 {  
+                  SerialBT.println("OLED on");
+                  display.dim(false);
+                  }
+              if (!displayOn)
+                 {  
+                  SerialBT.println("OLED off");
+                  display.dim(true);
+                  }
+              display.display();
+            }
+
+          if ( tmp_string == "led") 
+            { 
+              ledOn = !ledOn;
+              if (ledOn)SerialBT.println("LED on");
+              if (!ledOn)SerialBT.println("LED off");
+            }
+          
+          if ( dataOK ) LoRa_send();    
+          if ( !dataOK ) tmp_string="";    
+          make_display();                     
+        }
       delay(20);
     }
     
@@ -409,52 +529,48 @@ void loop()
 void LoRa_send()
   {
  
-    if ( token == false || tmp_string == "" )
+    if ( !token || !dataOK )
       {
-        Serial.println(F("no data or too fast TX: NOT SEND"));
-        tmp_string = "";
+        Serial.print(F("NOT SEND: "));
+        if (!token)  Serial.println("too fast TX");
+        if (!dataOK) Serial.println("no valid data to TX");
+        tmp_string="";
+        dataOK=false;
+        display.clearDisplay();
+        display.setTextColor(WHITE);
+        display.setTextSize(2);
+        display.setCursor(16,10);
+        display.print("NOT SEND");
+        display.setTextSize(1);
+        display.setCursor(0,50);
+        if (!token) display.print("too fast TX");
+        if (!dataOK )display.print("no valid data to TX");
+        display.display();
+        if (!displayOn && ledOn) fast_blink(); 
+        if (!ledOn ) delay(2000);
+        make_display();   // carica display con dati correnti
+ 
         
-        if (display_onoff == 1 )
-          { 
-            display.clearDisplay();
-            display.setTextColor(WHITE);
-            display.setTextSize(2);
-            display.setCursor(16,10);
-            display.print("NOT SEND");
-            display.setTextSize(1);
-            display.setCursor(0,50);
-            if (!token) display.print("too fast TX");
-            if (token && tmp_string == "" )display.print("no data to TX");
-            
-            display.display();
-            if (led_onoff == 1 )  fast_blink();
-            if (led_onoff == 0 )  delay(2000);
-            
-            make_display();   // carica display con dati correnti
-          } 
-        if (display_onoff == 0 && led_onoff == 1)  fast_blink(); 
       }
    
-    if ( token == true && tmp_string != "" )
+    if ( token && dataOK )
       {   
+        data_string = "";
         tmp= int(battery_voltage * 100 );
         byte centinaia  = ( tmp / 100 );                        // calculo del valor dell unita
         byte decine  = (tmp - (centinaia * 100)) / 10;          // alculo del valor de dec1
         byte unita =  tmp - (centinaia * 100) - (decine * 10);  // calculo del valor de dec2
-        tmp_string = tmp_string + ' ' + '|' + ' ' + 'b' + 'a' + 't' + 't' + ':' + char(48+centinaia) + '.' +char(48+decine) + char(48+unita);
+        data_string = tmp_string + ' ' + '|' + ' ' + 'b' + 'a' + 't' + 't' + ':' + char(48+centinaia) + '.' +char(48+decine) + char(48+unita);
 
         cnt++;
         if (cnt > 999 ) cnt = 0;
         centinaia =  cnt / 100;                            // calculo del valor de centenas
         decine  = (cnt - (centinaia * 100)) / 10;          // calculo del valor de decenas
         unita =  cnt - (centinaia * 100) - (decine * 10);  // calculo del valor de unidades
-        tmp_string = tmp_string + ' ' + '|' + ' ' + char(48+centinaia) + char(48+decine) + char(48+unita) + char(10) ; // CR and LF are control characters, respectively coded 0x0D (13 decimal) and 0x0A (10 decimal).
-        data_string = tmp_string;
-        tmp_string = "";
+        data_string = data_string+ ' ' + '|' + ' ' + char(48+centinaia) + char(48+decine) + char(48+unita) + char(10) ; // CR and LF are control characters, respectively coded 0x0D (13 decimal) and 0x0A (10 decimal).
         Serial.println(data_string);
 
-        if (display_onoff == 1 )
-          {     
+    
             display.clearDisplay();
             display.setTextColor(WHITE);
             display.setTextSize(3);
@@ -464,16 +580,25 @@ void LoRa_send()
             display.setCursor(50,40);
             if(cnt<100)  {display.print("0");}
             if(cnt<10)   {display.print("0");}
-            display.print(cnt);
+            display.print(cnt);battery:
             display.display();
-          }
+
         
-        if (led_onoff == 1 )  digitalWrite(PLED1,HIGH);
+        if (ledOn )  digitalWrite(PLED1,HIGH);
         lora_send(data_string);
-        if (led_onoff == 1 )  digitalWrite(PLED1,LOW);
+        LoRa.sleep();
+        if (ledOn )  digitalWrite(PLED1,LOW);
         token = false;
-        tx_interval = millis();
-        if (display_onoff == 1 ) make_display();   // carica display con dati correnti  
+        mem_tmp_string = tmp_string;
+        sep = mem_tmp_string.indexOf(58);           // uso temporaneo della variabile sep per trovare la posizione di ':' nella stringa
+        if (sep != 0 ) 
+          { 
+            mem_tmp_string.setCharAt(sep+10, 92);   // sostituisci il simbolo di sperazione lat/long con il simbolo '\' = ASCII 92
+            mem_tmp_string.setCharAt(sep+20, 111);  // sostituisci il simbolo APRS con il simbolo 'o' = ASCII = 111
+          }
+        tmp_string = "";  
+        tx_interval = millis();                    // memorizza l'istante di invio
+        make_display();   // carica display con dati correnti  
       } 
   }
 
@@ -497,13 +622,18 @@ void make_display()
     display.setCursor(0,24);
     display.print("sended: ");
     display.print(cnt);
-    display.print(" string");
+    if (!Beacon) display.print(" string");
+    if (Beacon) display.print(" beacon");
     display.setCursor(0,36);
     display.println("---------------------");
     display.setCursor(0,48);
-    display.print(Project);
-    display.print(" " );
-    display.print(Release);
+    if (Xmode )display.println("Xmode active !");
+    else 
+      {
+        display.print(Project);
+        display.print(" " );
+        display.print(Release);
+      }
     display.display();  
   }
 
@@ -614,7 +744,7 @@ void menu()
       Serial.println(F("(f)requency"));
       Serial.println(F("(p)ower"));
       Serial.println(F("(t)x interval"));
-      Serial.println(F("(d)isplay"));
+      Serial.println(F("(d)isplay OLED"));
       Serial.println(F("(l)ed"));
       Serial.println(F("(0) EXIT"));
       righello();
@@ -623,7 +753,7 @@ void menu()
       switch (carMenu)
         {
           case '0' :
-           status_display();
+           status();
            break;
 
           case 'p' :
@@ -638,38 +768,39 @@ void menu()
             EEPROM.commit();
             lora_setup();
             break;
+
+
+            case 'x' :
+            Xmode = !Xmode;
+            lora_setup();
+            if (Xmode ) Serial.println(F("Xmode actived"));
+            if (!Xmode ) Serial.println(F("Xmode disactived"));
+            //EEPROM.write(8, Xmode);
+            //EEPROM.commit(); 
+            break;
          
           case 'd' :
-            Serial.print(F("display on/off - ex: 1 = on"));
-            readCharArray(tmp_buffer);
-            display_onoff = atoi(tmp_buffer);
-            verifica_parametri();
-            Serial.print(F(" = "));
-            if ( display_onoff == 0 )
-              {
-                Serial.println(F("display OFF"));
-                display.clearDisplay();
-                display.display();
+            displayOn = !displayOn;
+            if (displayOn )
+              { 
+                Serial.println(F("OLED actived"));
+                display.dim(false);  
               }
-            if ( display_onoff == 1 )
-              {
-                Serial.println(F("display ON"));
-                make_display();
+            if (!displayOn )
+              { 
+                Serial.println(F("OLED disactived"));
+                display.dim(true);  
               }
-            EEPROM.write(6, display_onoff);
+            EEPROM.write(6, displayOn);
             EEPROM.commit(); 
             break;
 
           case 'l' :
-            Serial.print(F("led on/off - ex: 1 = on"));
-            readCharArray(tmp_buffer);
-            led_onoff = atoi(tmp_buffer);
-            verifica_parametri();
-            Serial.print(F(" = "));
-            if ( led_onoff == 0 ) Serial.println(F("led OFF"));
-            if ( led_onoff == 1 ) Serial.println(F("led ON"));
-            EEPROM.write(7, led_onoff);
-            EEPROM.commit();
+            ledOn = !ledOn;
+            if (ledOn ) Serial.println(F("LED actived"));
+            if (!ledOn ) Serial.println(F("LED disactived"));
+            EEPROM.write(7, ledOn);
+            EEPROM.commit(); 
             break;
 
           case 't' :
@@ -712,7 +843,7 @@ void menu()
   ---------------------------------------------------------------------------
   */
 
-void status_display()
+void status()
   {
     righello();
     Serial.print(F(Project));
@@ -737,16 +868,18 @@ void status_display()
     Serial.println(F(" secs"));
     
     Serial.print(F("display: "));
-    if (display_onoff == 0 ) Serial.println(F("OFF"));
-    if (display_onoff == 1 ) Serial.println(F("ON"));
+    if (displayOn ) Serial.println(F("ON"));
+    if (!displayOn ) Serial.println(F("OFF"));
     
     Serial.print(F("led: "));
-    if (led_onoff == 0 ) Serial.println(F("OFF"));
-    if (led_onoff == 1 ) Serial.println(F("ON"));
+    if (ledOn ) Serial.println(F("ON"));
+    if (!ledOn ) Serial.println(F("OFF"));
 
     Serial.print(F("battery: "));
     Serial.print(battery_voltage);
     Serial.println(F(" Volt"));
+
+    if(Xmode ) Serial.println(F("Xmode is active"));
     
     righello();
     Serial.println(F(bottom));
@@ -782,8 +915,9 @@ void load_param()
         initial_reset();        // carica valori di default nella EEPROM
       }
  
-    display_onoff = EEPROM.read(6);
-    led_onoff = EEPROM.read(7);
+    displayOn = EEPROM.read(6);
+    ledOn = EEPROM.read(7);
+    //Xmode = EEPROM.read(8);
     LoRa_power = EEPROM.read(38);
 
     val_tx_interval = EEPROM.read(40);
@@ -824,8 +958,9 @@ void initial_reset()
         tmp++;    // avanza di una cella EEPROM
       }
    
-    EEPROM.write(6, display_onoff);
-    EEPROM.write(7, led_onoff);
+    EEPROM.write(6, displayOn);
+    EEPROM.write(7, ledOn);
+    //EEPROM.write(8, Xmode);
     EEPROM.write(38, LoRa_power);
     EEPROM.write(40, val_tx_interval);
 
@@ -854,12 +989,12 @@ void verifica_parametri()
   {
     tmp=0;
 
+    
     if (LoRa_power <2 ) LoRa_power = 2;
     if (LoRa_power >17 ) LoRa_power = 17;
     if (val_tx_interval <15 ) val_tx_interval = 30;   // da 15 secondi a 120 secondi
     if (val_tx_interval >120 ) val_tx_interval = 120;
-    if (display_onoff >1 ) display_onoff = 1;
-    if (led_onoff >1 ) led_onoff = 1;
+
   }
 
 
@@ -904,9 +1039,19 @@ void lora_setup() {
     Serial.println("Failed to setup LoRa module.");
     while (1);
   }
-  LoRa.setSpreadingFactor(LoRa_SpreadingFactor);
-  LoRa.setSignalBandwidth(LoRa_SignalBandwidth);
-  LoRa.setCodingRate4(LoRa_CodingRate4);
+  if (Xmode )
+    {
+      LoRa.setSpreadingFactor(LoRa_XSpreadingFactor);   // --- parametri veloci
+      LoRa.setSignalBandwidth(LoRa_XSignalBandwidth);
+      LoRa.setCodingRate4(LoRa_XCodingRate4);
+    }  
+  else
+    {  
+      LoRa.setSpreadingFactor(LoRa_SpreadingFactor);    // --- parametri std
+      LoRa.setSignalBandwidth(LoRa_SignalBandwidth);
+      LoRa.setCodingRate4(LoRa_CodingRate4);
+    }
+
   LoRa.enableCrc();
   LoRa.setTxPower(LoRa_power);
   delay(500);
@@ -935,8 +1080,9 @@ void lora_send(String tx_data) {
  
   
 0 - 5   // build:230405 | 6
-6 - 6   // display on/off | 1 = on | 0 = off 
-7 - 7   // led on/off | 1 = on | 0 = off 
+6 - 6   // displayOn | default = true
+7 - 7   // ledOn | default = true
+8 - 8   // Xmode on/off | 1 = on | 0 = off 
 38 - 38 // set power: 2-17 | 1
 39 - 39 // set nr_send 1-3 | 1
 40 - 40 // set tx_interval 15-120 | valori da 1 a 2 --> da 15 secondi a 120 secondi
